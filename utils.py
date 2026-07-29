@@ -132,7 +132,7 @@ categorical_pipeline = Pipeline([
 ])
 
 def get_preprocessing_pipeline(df=None):
-    binary_cols = [
+    candidate_binary_cols = [
         "PoolPrivateYN",
         "ViewYN",
         "FireplaceYN",
@@ -140,25 +140,33 @@ def get_preprocessing_pipeline(df=None):
         "AttachedGarageYN"
     ]
 
-    numeric_cols = [
+    candidate_numeric_cols = [
         "LivingArea",
         "LotSizeArea",
         "LotSizeSquareFeet",
+        "BedBathRatio",
+        "AgeProperty",
     ]
 
-    level_cols = ["Levels"]
+    candidate_level_cols = ["Levels"]
 
     if df is not None:
+        # Filter candidate lists to only keep columns that actually exist in df
+        binary_cols = [c for c in candidate_binary_cols if c in df.columns]
+        numeric_cols = [c for c in candidate_numeric_cols if c in df.columns]
+        level_cols = [c for c in candidate_level_cols if c in df.columns]
 
+        # Dynamically detect object/categorical columns that aren't binary or level features
         categorical_cols = [
-            c for c in df.select_dtypes(include="object").columns
-            if c not in binary_cols + level_cols
+            c for c in df.select_dtypes(include=["object", "category"]).columns
+            if c not in candidate_binary_cols + candidate_level_cols
         ]
-
     else:
-
+        # Fallbacks if df is not passed
+        binary_cols = candidate_binary_cols
+        numeric_cols = candidate_numeric_cols
+        level_cols = candidate_level_cols
         categorical_cols = []
-
     
     preprocessor = ColumnTransformer(
 
